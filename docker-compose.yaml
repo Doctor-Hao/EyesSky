@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-database}
+    ports:
+      - 5432:5432
+
+  redis:
+    image: redis
+    ports:
+      - 6379:6379
+
+  nginx:
+    build:
+      context: web
+      dockerfile: ../docker/web.Dockerfile
+    ports:
+      - '80:80' # Прокси порт для Nginx
+
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/app.Dockerfile
+    ports:
+      - '8080:8080'
+    depends_on:
+      - redis
+      - postgres
+
+  worker:
+    build:
+      context: .
+      dockerfile: ./docker/worker.Dockerfile
+    # ports:
+    #   - '8081:8081'
+    depends_on:
+      - redis
+      - postgres
+      - app
